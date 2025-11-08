@@ -36,7 +36,7 @@
                 document.getElementById("movie").innerText = "- " + data.movie + "  (" + data.year + ")";
                 quote_text = data.quote.trim();
 
-                start_typing(); // reset and prepare typing area
+                start_typing();
             }
             catch (e)
             {
