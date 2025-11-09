@@ -35,8 +35,7 @@ public class AuthServlet extends HttpServlet
         else if ("login".equals(action))
         {
             String email = request.getParameter("email");
-            String password = request.getParameter("password");
-            
+            String password = request.getParameter("password");            
 
             boolean valid = UserDAO.validate_user(email, password);
             if (valid)
@@ -44,7 +43,9 @@ public class AuthServlet extends HttpServlet
                 HttpSession session = request.getSession();
                 session.setAttribute("email", email);
                 String username = UserDAO.get_username_by_email(email);
+                int user_id = UserDAO.get_user_id_by_email(email);
                 session.setAttribute("username", username);
+                session.setAttribute("user_id", user_id);
                 response.sendRedirect("home.jsp");
             }
             else

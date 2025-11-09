@@ -1,4 +1,4 @@
--- Database: typinggame
+-- -- Database: typinggame
 
 CREATE TABLE if not exists users
 (
@@ -18,14 +18,29 @@ CREATE TABLE if not exists quotes
     year INT
 );
 
+CREATE TABLE if not exists scores
+(
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+	quote_id INT NOT NULL,
+    wpm NUMERIC(6,2) NOT NULL,
+    accuracy NUMERIC(5,2) NOT NULL,
+    time_taken NUMERIC(8,3) NOT NULL,
+    played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- COPY quotes(quote, movie, type, year)
 -- FROM 'C:\Program Files\PostgreSQL\18\data\movie_quotes.csv'
 -- DELIMITER ','
 -- CSV HEADER
 -- QUOTE '"';
 
-select * from quotes;
-SELECT quote, movie, year FROM quotes WHERE movie IS NULL OR movie = '';
+-- select * from quotes;
+-- SELECT quote, movie, year FROM quotes WHERE movie IS NULL OR movie = '';
+
+
+SELECT * FROM scores;
+
+UPDATE quotes SET quote = REPLACE(REPLACE(REPLACE(REPLACE(quote, '’', ''''), '‘', ''''), '“', '"'), '”', '"');
 
 COMMIT;
-

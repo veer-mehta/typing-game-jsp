@@ -22,15 +22,16 @@ public class QuoteServlet extends HttpServlet
 
         try (Connection conn = DBConnection.get_connection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT quote, movie, type, year FROM quotes ORDER BY RANDOM() LIMIT 1"))
+                     "SELECT id, quote, movie, type, year FROM quotes ORDER BY RANDOM() LIMIT 1"))
         {
             ResultSet rs = ps.executeQuery();
             if (rs.next())
             {
-                json.put("quote", rs.getString("quote"));
-                json.put("movie", rs.getString("movie"));
-                json.put("type", rs.getString("type"));
-                json.put("year", rs.getInt("year"));
+            	json.put("id", rs.getInt("id"));
+            	json.put("quote", rs.getString("quote"));
+            	json.put("movie", rs.getString("movie"));
+            	json.put("type", rs.getString("type"));
+            	json.put("year", rs.getInt("year"));
             }
         }
         catch (Exception e)
