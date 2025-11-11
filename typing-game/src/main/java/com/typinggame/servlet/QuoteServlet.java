@@ -9,29 +9,52 @@ import java.io.PrintWriter;
 import java.sql.*;
 import org.json.JSONObject;
 
-@WebServlet("/TextServlet")
+@WebServlet("/QuoteServlet")
 public class QuoteServlet extends HttpServlet
 {
     private static final long serialVersionUID = 1L;
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException
     {
         response.setContentType("application/json");
         JSONObject json = new JSONObject();
 
-        try (Connection conn = DBConnection.get_connection();
-             PreparedStatement ps = conn.prepareStatement(
-                     "SELECT id, quote, movie, type, year FROM quotes ORDER BY RANDOM() LIMIT 1"))
+        String type = request.getParameter("type");
+        String whereClause = "";
+
+        if ("short".equalsIgnoreCase(type))
         {
-            ResultSet rs = ps.executeQuery();
+            whereClause = "WHERE char_length(coalesce(quote,'')) <= 50";
+        }
+        else if ("medium".equalsIgnoreCase(type))
+        {
+            whereClause = "WHERE char_length(coalesce(quote,'')) BETWEEN 51 AND 140";
+        }
+        else if ("long".equalsIgnoreCase(type))
+        {
+            whereClause = "WHERE char_length(coalesce(quote,'')) > 140";
+        }
+
+        String sql = "SELECT id, quote, movie, year FROM quotes "
+                   + (whereClause.isEmpty() ? "" : whereClause)
+                   + " ORDER BY RANDOM() LIMIT 1";
+
+        try (Connection conn = DBConnection.get_connection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery())
+        {
             if (rs.next())
             {
-            	json.put("id", rs.getInt("id"));
-            	json.put("quote", rs.getString("quote"));
-            	json.put("movie", rs.getString("movie"));
-            	json.put("type", rs.getString("type"));
-            	json.put("year", rs.getInt("year"));
+                json.put("id", rs.getInt("id"));
+                json.put("quote", rs.getString("quote"));
+                json.put("movie", rs.getString("movie"));
+                json.put("year", rs.getInt("year"));
+            }
+            else
+            {
+                json.put("error", "No quotes found for the selected type");
             }
         }
         catch (Exception e)
