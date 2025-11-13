@@ -8,6 +8,7 @@
         response.sendRedirect("login.jsp");
         return;
     }
+    String username = session.getAttribute("username").toString();
 
     Map<String, List<Map<String, Object>>> all_leaderboards = new HashMap<>();
     String[] lengths = {"short", "medium", "long"};
@@ -56,58 +57,32 @@
         all_leaderboards.put(lengthParam, records);
     }
 %>
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Home</title>
-    <style>
-        body {
-            font-family: Arial;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 6px;
-            text-align: left;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        a {
-            margin-right: 10px;
-            text-decoration: none;
-            color: blue;
-        }
-        select {
-            margin-top: 10px;
-            padding: 4px;
-        }
-        td.quote-cell {
-            max-width: 400px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="home.css">
 </head>
 <body>
-    <h2>Welcome, <%= session.getAttribute("username") %></h2>
-    <a href="game.jsp">Start Typing Test</a>
-    <a href="logout.jsp">Logout</a>
+    <div class="navbar">
+        <div class="navbar-left">
+            <h2>Welcome, <%= username %></h2>
+        </div>
+			<div>Total Runs: <strong id="totalRuns">--</strong></div>
+            <div>Avg WPM: <strong id="avgWpm">--</strong></div>
+            <div>Top WPM: <strong id="topWpm">--</strong></div>
+            <div>Avg Accuracy: <strong id="avgAcc">--</strong>%</div>
+        <div class="navbar-right">
+            <a href="game.jsp">Start Typing Test</a>
+            <a href="logout.jsp">Logout</a>
+        </div>
+    </div>
+    
+    
 
-    <h3>Top 20 Typing Scores</h3>
-    <label for="length-select">Select text length: </label>
-    <select id="length-select">
-        <option value="short">Short text</option>
-        <option value="medium" selected>Medium text</option>
-        <option value="long">Long text</option>
-    </select>
-
+    <h3 style="color:#fff; margin-top:20px;">Top 20 Typing Scores</h3>
+            
     <table>
         <thead>
             <tr>
@@ -122,6 +97,14 @@
         </thead>
         <tbody id="leaderboard-body"></tbody>
     </table>
+    <br>
+    <label for="length-select" style="color:#fff;">Text Length:</label>
+	<select id="length-select">
+                <option value="short">Short</option>
+                <option value="medium" selected>Medium</option>
+                <option value="long">Long</option>
+            </select>
+            
 
     <script>
         var all_leaderboards = {
@@ -129,6 +112,21 @@
             medium: <%= new JSONArray(all_leaderboards.get("medium")).toString() %>,
             long: <%= new JSONArray(all_leaderboards.get("long")).toString() %>
         };
+
+        async function loadUserStats() {
+            try {
+                const res = await fetch("<%= request.getContextPath() %>/UserStatsServlet");
+                const data = await res.json();
+                if (data.error) return;
+
+                document.getElementById("totalRuns").textContent = data.totalRuns || 0;
+                document.getElementById("avgWpm").textContent = (data.avgWpm || 0).toFixed(2);
+                document.getElementById("topWpm").textContent = (data.topWpm || 0).toFixed(2);
+                document.getElementById("avgAcc").textContent = (data.avgAcc || 0).toFixed(2);
+            } catch (e) {
+                console.error("Failed to load user stats:", e);
+            }
+        }
 
         function truncate(str, n) {
             if (!str) return "";
@@ -169,7 +167,9 @@
             select.addEventListener("change", function() {
                 render_leaderboard(this.value);
             });
+
             render_leaderboard("medium");
+            loadUserStats();
         });
     </script>
 </body>

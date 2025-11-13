@@ -1,62 +1,54 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*, com.typinggame.util.DBConnection" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page session="true" %>
+<%
+    if (session.getAttribute("username") == null)
+    {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+    String username = session.getAttribute("username").toString();
+%>
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Typing Game</title>
-<style>
-    body
-    {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-    }
-    #quote_display
-    {
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    #quote_display span.correct { color: green; }
-    #quote_display span.wrong { color: red; }
-    #movie
-    {
-        font-style: italic;
-        margin-bottom: 10px;
-    }
-    textarea
-    {
-        width: 100%;
-        height: 80px;
-        font-size: 16px;
-    }
-    #result
-    {
-        margin-top: 10px;
-        font-weight: bold;
-    }
-    button, select
-    {
-        margin-top: 5px;
-        padding: 5px 10px;
-        font-size: 14px;
-    }
-</style>
+    <link rel="stylesheet" type="text/css" href="game.css">
 </head>
 <body onload="fetch_quote()">
-    <h2>Typing Game</h2>
 
+    <div class="navbar">
+        <div class="navbar-left">
+            <h2>Welcome, <%= username %></h2>
+        </div>
+        <div>Total Runs: <strong id="totalRuns">--</strong></div>
+        <div>Avg WPM: <strong id="avgWpm">--</strong></div>
+        <div>Top WPM: <strong id="topWpm">--</strong></div>
+        <div>Avg Accuracy: <strong id="avgAcc">--</strong>%</div>
+        <div class="navbar-right">
+        	<a href="home.jsp">Leaderboard</a>
+            <a href="logout.jsp">Logout</a>
+        </div>
+    </div>
+	<br>
     <div id="quote_display"></div>
     <div id="movie"></div>
+    <br>
 
     <textarea id="user_input" oninput="on_type()" placeholder="Start typing here..."></textarea>
+    <div id="result" style="margin-top:10px;"></div>
     
-    <select id="quote_type">
+    <div>
+    
+	<label for="quote_type" style="color:#fff;">Text Length:</label>
+    <select id="quote_type" onchange="fetch_quote()">
         <option value="short">Short</option>
         <option value="medium" selected>Medium</option>
         <option value="long">Long</option>
     </select>
-    <button onclick="fetch_quote()">New Quote</button>
-    <button onclick="window.location.href='home.jsp'">View Leaderboard</button>
-
-    <div id="result"></div>
+    <a href="game.jsp">New Quote</a>
+    </div>
 
 <script>
     let quote_text = "";
@@ -65,7 +57,22 @@
     let timer_running = false;
     let typed_chars = 0;
     let correct_chars = 0;
-    let total_errors = 0; // permanent penalty tracker
+    let total_errors = 0;
+
+    async function loadUserStats() {
+        try {
+            const res = await fetch("<%= request.getContextPath() %>/UserStatsServlet");
+            const data = await res.json();
+            if (data.error) return;
+
+            document.getElementById("totalRuns").textContent = data.totalRuns || 0;
+            document.getElementById("avgWpm").textContent = (data.avgWpm || 0).toFixed(2);
+            document.getElementById("topWpm").textContent = (data.topWpm || 0).toFixed(2);
+            document.getElementById("avgAcc").textContent = (data.avgAcc || 0).toFixed(2);
+        } catch (e) {
+            console.error("Failed to load user stats:", e);
+        }
+    }
 
     async function fetch_quote()
     {
@@ -174,7 +181,6 @@
             else
             {
                 spans[i].className = "wrong";
-                // permanent error counting
                 if (i >= total_errors) total_errors++;
             }
         }
@@ -199,13 +205,14 @@
             " | Accuracy: " + accuracy.toFixed(2) + "%" +
             " | Time: " + time_taken.toFixed(1) + "s";
 
-        // completion
         if (input_val === quote_text)
         {
             document.getElementById("user_input").disabled = true;
             await save_score(wpm.toFixed(2), accuracy.toFixed(2), time_taken);
         }
     }
+
+    document.addEventListener("DOMContentLoaded", loadUserStats);
 </script>
 </body>
 </html>
